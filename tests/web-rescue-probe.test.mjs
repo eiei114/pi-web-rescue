@@ -44,15 +44,29 @@ test("playwright_cli is detection-only with browser note", () => {
   assert.equal(result.browser_note, BROWSER_DETECTION_NOTE);
 });
 
-test("deep=true includes failure_chain metadata", () => {
+test("deep=true preserves the ordered failure chain metadata", () => {
   const shallow = webRescueProbe();
   const deep = webRescueProbe({ deep: true });
 
   assert.equal(shallow.failure_chain, undefined);
-  assert.ok(deep.failure_chain);
-  assert.equal(deep.failure_chain.length, 4);
-  assert.equal(deep.failure_chain[0]?.route, "native_fetch");
-  assert.equal(deep.failure_chain[0]?.fallback, "rss_atom_parse");
+  assert.deepEqual(deep.failure_chain, [
+    {
+      route: "native_fetch",
+      reason: "not_implemented",
+      fallback: "rss_atom_parse",
+    },
+    {
+      route: "rss_atom_parse",
+      reason: "not_implemented",
+      fallback: "html_excerpt",
+    },
+    {
+      route: "html_excerpt",
+      reason: "not_implemented",
+      fallback: "playwright_cli",
+    },
+    { route: "playwright_cli", reason: "detection_only" },
+  ]);
 });
 
 test("formatDoctorSummary includes route names and browser note", () => {

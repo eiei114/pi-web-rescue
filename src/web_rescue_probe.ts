@@ -43,27 +43,14 @@ function buildRoute(name: (typeof ROUTE_NAMES)[number]): RouteProbeResult {
 }
 
 function buildFailureChain(): FailureChainEntry[] {
-  return [
-    {
-      route: "native_fetch",
-      reason: "not_implemented",
-      fallback: "rss_atom_parse",
-    },
-    {
-      route: "rss_atom_parse",
-      reason: "not_implemented",
-      fallback: "html_excerpt",
-    },
-    {
-      route: "html_excerpt",
-      reason: "not_implemented",
-      fallback: "playwright_cli",
-    },
-    {
-      route: "playwright_cli",
-      reason: "detection_only",
-    },
-  ];
+  return ROUTE_NAMES.map((route, index) => {
+    const fallback = ROUTE_NAMES[index + 1];
+    if (fallback) {
+      return { route, reason: "not_implemented", fallback };
+    }
+
+    return { route, reason: "detection_only" };
+  });
 }
 
 /**

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.2
+
+- Derive failure-chain route order from the shared route-name list.
+
 ## 0.0.1
 
 - Walking skeleton: `web_rescue_probe` tool and `/web-rescue:doctor` command
