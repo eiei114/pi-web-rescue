@@ -69,6 +69,22 @@ test("deep=true preserves the ordered failure chain metadata", () => {
   ]);
 });
 
+test("failure-chain reasons and fallbacks stay aligned with route metadata", () => {
+  const result = webRescueProbe({ deep: true });
+  const routesByName = new Map(result.routes.map((route) => [route.name, route]));
+
+  assert.equal(result.failure_chain?.length, result.routes.length);
+  for (const [index, entry] of result.failure_chain.entries()) {
+    const route = routesByName.get(entry.route);
+    assert.ok(route);
+    assert.equal(
+      entry.reason,
+      route.status === "detection_only" ? "detection_only" : "not_implemented",
+    );
+    assert.equal(entry.fallback, result.routes[index + 1]?.name);
+  }
+});
+
 test("formatDoctorSummary includes route names and browser note", () => {
   const result = webRescueProbe();
   const summary = formatDoctorSummary(result);
