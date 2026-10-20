@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.3
+
+- Consolidate route capability and failure-chain metadata to keep both probe surfaces aligned.
+
 ## 0.0.2
 
 - Derive failure-chain route order from the shared route-name list.

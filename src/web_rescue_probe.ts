@@ -6,6 +6,7 @@
 
 import type {
   FailureChainEntry,
+  RouteName,
   RouteProbeResult,
   WebRescueProbeResult,
 } from "./types.ts";
@@ -17,39 +18,59 @@ export const DEFAULT_MAX_BYTES = 5_242_880;
 export const BROWSER_DETECTION_NOTE =
   "playwright_cli is detection-only in this slice; no browser automation runs.";
 
+type RouteMetadata = Pick<RouteProbeResult, "status" | "available" | "note"> & {
+  failureReason: FailureChainEntry["reason"];
+};
+
+const ROUTE_METADATA: Record<RouteName, RouteMetadata> = {
+  native_fetch: {
+    status: "available",
+    available: true,
+    failureReason: "not_implemented",
+  },
+  rss_atom_parse: {
+    status: "available",
+    available: true,
+    failureReason: "not_implemented",
+  },
+  html_excerpt: {
+    status: "available",
+    available: true,
+    failureReason: "not_implemented",
+  },
+  playwright_cli: {
+    status: "detection_only",
+    available: false,
+    note: BROWSER_DETECTION_NOTE,
+    failureReason: "detection_only",
+  },
+};
+
 export interface WebRescueProbeOptions {
   deep?: boolean;
 }
 
 function buildRoute(name: (typeof ROUTE_NAMES)[number]): RouteProbeResult {
-  if (name === "playwright_cli") {
-    return {
-      name,
-      status: "detection_only",
-      available: false,
-      default_timeout_ms: DEFAULT_TIMEOUT_MS,
-      default_max_bytes: DEFAULT_MAX_BYTES,
-      note: BROWSER_DETECTION_NOTE,
-    };
-  }
+  const metadata = ROUTE_METADATA[name];
 
   return {
     name,
-    status: "available",
-    available: true,
+    status: metadata.status,
+    available: metadata.available,
     default_timeout_ms: DEFAULT_TIMEOUT_MS,
     default_max_bytes: DEFAULT_MAX_BYTES,
+    ...(metadata.note === undefined ? {} : { note: metadata.note }),
   };
 }
 
 function buildFailureChain(): FailureChainEntry[] {
   return ROUTE_NAMES.map((route, index) => {
     const fallback = ROUTE_NAMES[index + 1];
-    if (fallback) {
-      return { route, reason: "not_implemented", fallback };
-    }
-
-    return { route, reason: "detection_only" };
+    return {
+      route,
+      reason: ROUTE_METADATA[route].failureReason,
+      ...(fallback === undefined ? {} : { fallback }),
+    };
   });
 }
 
